@@ -1,0 +1,13 @@
+{
+  "name": "kick-tools",
+  "owner": {
+    "name": "israelb"
+  },
+  "plugins": [
+    {
+      "name": "kick",
+      "source": ".",
+      "description": "Hand off a live Claude Code session to your own server and pull it back. Commands: kick, kick-setup, kick-pull, kick-status."
+    }
+  ]
+}
