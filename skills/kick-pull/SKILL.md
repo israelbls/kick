@@ -22,6 +22,11 @@ mirror and the user can `claude --resume <id>` locally. Heavy lifting is in
 `KICK_ALERT:` wrong but may continue · `KICK_FATAL:` aborted.
 </status_markers>
 
+<golden_rule>
+Any question to the user goes through the AskUserQuestion tool, never plain text,
+in warm and simple words. This especially covers the divergence choice below.
+</golden_rule>
+
 <flow>
 Run from the project directory.
 
