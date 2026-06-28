@@ -21,7 +21,7 @@ for a in "$@"; do case "$a" in
 esac; done
 
 CFG="$(k_config_path "$PROJECT_DIR")"
-[ -f "$CFG" ] || k_fatal "no kick config here — run '/kick:setup' first."
+[ -f "$CFG" ] || k_fatal "no kick config here — run '/kick-setup' first."
 KICK_HOST="$(k_config_get host "$PROJECT_DIR")"
 KICK_USER="$(k_config_get user "$PROJECT_DIR")"
 KICK_PORT="$(k_config_get port "$PROJECT_DIR" 2>/dev/null || true)"
@@ -86,7 +86,7 @@ if [ "$DRY" = "1" ]; then
   k_info "  session:     $SID"
   k_info "  would bring: $COMMITS new commit(s), ~$TURNS conversation turn(s), payload $SIZE"
   if [ "$DIVERGED" = "1" ]; then k_alert "DIVERGED (${REASONS# }) — a real pull would ask you and back up local work first."
-  else k_ok "Clean pull available. Run '/kick:pull' to apply."; fi
+  else k_ok "Clean pull available. Run '/kick-pull' to apply."; fi
   rm -rf "$STAGE"; exit 0
 fi
 

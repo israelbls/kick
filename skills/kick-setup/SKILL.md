@@ -1,5 +1,5 @@
 ---
-name: setup
+name: kick-setup
 description: "One-time setup for the /kick session-handoff tool: connect to your remote server, log it into Claude, warm the repo + dependencies, carry secrets, and write a gitignored project config. Use when the user says set up kick, configure the remote, or connect a server for handoff. Run this before /kick."
 argument-hint: "[--refresh]"
 allowed-tools:
@@ -10,7 +10,7 @@ allowed-tools:
 
 <objective>
 One-time, per-project setup that leaves the remote server "warm" so later
-`/kick:push` calls are fast. Verifies the whole chain (SSH, remote `claude` login,
+`/kick` calls are fast. Verifies the whole chain (SSH, remote `claude` login,
 prerequisites), clones the repo to the server, installs deps, carries secrets,
 and writes a gitignored config at `<project>/.claude/kick.local.json`. Slow and
 thorough by design. Heavy lifting is in `lib/setup.sh`.
@@ -77,7 +77,7 @@ Run from the project directory.
      bash ${CLAUDE_PLUGIN_ROOT}/lib/setup.sh
    ```
    Relay any machine-tool notes it surfaces. Finish on `KICK_OK:` — then tell the
-   user they can now run `/kick:push` anytime.
+   user they can now run `/kick` anytime.
 
 For `--refresh`: skip steps 1-2, run `setup.sh --refresh`.
 </flow>

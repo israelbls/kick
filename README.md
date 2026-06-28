@@ -18,8 +18,8 @@ Use the full HTTPS URL (the `owner/repo` shorthand clones over SSH, which needs 
 GitHub SSH key + `github.com` in your `known_hosts`). Update later with
 `/plugin update kick@kick-tools`.
 
-Once installed, the four commands are invoked through the plugin namespace:
-`/kick:setup`, `/kick:push`, `/kick:pull`, `/kick:status`.
+Once installed, the four skills are invoked through the plugin (e.g.
+`/kick:kick-setup`, `/kick:kick`, `/kick:kick-pull`, `/kick:kick-status`).
 
 **Requirements:** an always-on Linux server you can reach over SSH, logged into
 Claude (`claude auth login`) once. The plugin needs `git`, `bash`, and a package
@@ -29,12 +29,12 @@ manager on that server; `python3` and `git` locally.
 
 | Command | When | What it does |
 |---------|------|--------------|
-| `/kick:setup` | once per project | Verifies SSH + remote `claude` login + prerequisites, clones the repo to the server, installs deps, carries secrets, writes a gitignored config. Slow, thorough. `--refresh` for a lighter re-sync. |
-| `/kick:push` | leaving the laptop | Ships only today's delta (uncommitted diff + current transcript) onto the warm server and resumes. Fast. `--refresh` re-syncs commits/deps first; `--dry-run` previews. |
-| `/kick:pull` | back at the laptop | Brings the remote's code + grown conversation back so the laptop mirrors it; then `claude --resume <id>`. Stops the remote session. |
-| `/kick:status` | anytime | Where the baton is, whether the remote advanced, whether you diverged, what a pull would bring. `--json` for scripting. |
+| `/kick-setup` | once per project | Verifies SSH + remote `claude` login + prerequisites, clones the repo to the server, installs deps, carries secrets, writes a gitignored config. Slow, thorough. `--refresh` for a lighter re-sync. |
+| `/kick` | leaving the laptop | Ships only today's delta (uncommitted diff + current transcript) onto the warm server and resumes. Fast. `--refresh` re-syncs commits/deps first; `--dry-run` previews. |
+| `/kick-pull` | back at the laptop | Brings the remote's code + grown conversation back so the laptop mirrors it; then `claude --resume <id>`. Stops the remote session. |
+| `/kick-status` | anytime | Where the baton is, whether the remote advanced, whether you diverged, what a pull would bring. `--json` for scripting. |
 
-**`/kick:pull` flags:** `--dry-run` (preview + verdict, transfers nothing), `--code-only` / `--convo-only` (partial), `--keep-remote` (don't stop the remote), `--fork` (land the cloud session under a new id + branch instead of overwriting). On true divergence (you advanced locally *and* on the remote), pull asks you — `remote-wins` / `fork` / `abort` — and always backs up local work first (`refs/kick/pre-pull-*`, a git stash, and a timestamped transcript copy).
+**`/kick-pull` flags:** `--dry-run` (preview + verdict, transfers nothing), `--code-only` / `--convo-only` (partial), `--keep-remote` (don't stop the remote), `--fork` (land the cloud session under a new id + branch instead of overwriting). On true divergence (you advanced locally *and* on the remote), pull asks you — `remote-wins` / `fork` / `abort` — and always backs up local work first (`refs/kick/pre-pull-*`, a git stash, and a timestamped transcript copy).
 
 **The baton:** each handoff flips an `active_side` and bumps a `generation`, recording a checkpoint (transcript tip, HEAD, worktree digest). That's how `pull`/`status` know whether the laptop diverged. Restore a backup with `git stash pop` / `git reset --hard refs/kick/pre-pull-<ts>` / copy the `.kick-bak-<ts>` transcript back.
 
@@ -59,20 +59,20 @@ Scripts print machine-readable status lines:
 
 ## Attaching from your phone
 
-After `/kick:push` prints the Remote Control name (e.g. `kick-mybox-1a2b3c4d`):
+After `/kick` prints the Remote Control name (e.g. `kick-mybox-1a2b3c4d`):
 open the Claude app → **Remote sessions** → pick that name. The remote process
 runs under `tmux` (fallback `nohup`), so it survives the SSH connection closing.
 
 ## Troubleshooting
 
-- **`no kick config` →** run `/kick:setup` first. `/kick:push` never sets up.
-- **Remote unreachable →** check the box/network; re-run `/kick:setup` if the
+- **`no kick config` →** run `/kick-setup` first. `/kick` never sets up.
+- **Remote unreachable →** check the box/network; re-run `/kick-setup` if the
   host changed.
 - **Remote not logged into Claude →** SSH in, run `claude auth login`, follow the
   device-code link, retry. Required for Remote Control.
 - **Kill a stuck remote session →** `ssh <box> 'tmux kill-session -t <rc-name>'`.
 - **See what the remote session is doing →** `ssh <box> 'tail -f ~/.claude/kick-<sid>.log'`.
-- **Dependencies changed →** `/kick:push` warns; run `/kick:push --refresh` to reinstall.
+- **Dependencies changed →** `/kick` warns; run `/kick --refresh` to reinstall.
 
 ## Known limitations (v1)
 
