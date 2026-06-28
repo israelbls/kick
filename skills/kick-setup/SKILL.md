@@ -28,7 +28,9 @@ question. A prose question ends your turn and makes setup feel broken. This
 includes free-form values like the host or username: put them through
 AskUserQuestion (the user types their answer in the answer field). Batch the
 unknowns into ONE call. Use warm, simple words a beginner would understand — no
-jargon, short sentences.
+jargon, short sentences. AskUserQuestion ALWAYS offers a free-text answer, so
+make the options only the real alternatives — never add an "I'll type it myself"
+option; instead phrase the prompt "pick one below, or type your own."
 </golden_rule>
 
 <flow>
