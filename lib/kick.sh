@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # kick.sh — the fast path. Ship today's delta + the current session, resume.
 #
-# Assumes /kick-setup already warmed the remote. Does as little as possible.
+# Assumes /kick:setup already warmed the remote. Does as little as possible.
 #
 # Usage:
 #   kick.sh            snapshot current session, ship delta, resume remotely
@@ -23,7 +23,7 @@ done
 
 # ---- 1. load config (missing -> stop, no work) -----------------------------
 CFG="$(k_config_path "$PROJECT_DIR")"
-[ -f "$CFG" ] || k_fatal "no kick config here — run '/kick-setup' first."
+[ -f "$CFG" ] || k_fatal "no kick config here — run '/kick:setup' first."
 
 KICK_HOST="$(k_config_get host "$PROJECT_DIR")"
 KICK_USER="$(k_config_get user "$PROJECT_DIR")"
@@ -45,7 +45,7 @@ if k_reachable; then
 elif [ "$DRY_RUN" = "1" ]; then
   k_alert "remote not reachable right now — dry-run continues, but a real kick would stop here."
 else
-  k_fatal "remote unreachable — check the network/box, or re-run '/kick-setup'."
+  k_fatal "remote unreachable — check the network/box, or re-run '/kick:setup'."
 fi
 
 # ---- 4. identify the live session ------------------------------------------
@@ -123,7 +123,7 @@ if [ "$DRY_RUN" = "1" ]; then
   k_info "  uncommitted:    ${PATCH_BYTES} bytes of tracked changes"
   k_info "  payload:        $SIZE across $NFILES files"
   k_info "  would resume:   claude --remote-control '$RC_NAME' --resume $SID"
-  k_ok "Dry run complete. Run '/kick' (no flag) to actually hand off."
+  k_ok "Dry run complete. Run '/kick:push' (no flag) to actually hand off."
   exit 0
 fi
 
@@ -137,7 +137,7 @@ k_ssh "cd $REMOTE_STAGE && bash kick-land.sh"
 # ---- 9. update state + record handoff checkpoint + drift check -------------
 [ -n "$LOCAL_SHA" ] && k_config_set "$PROJECT_DIR" "remote_head_sha=$LOCAL_SHA"
 
-# Record where the laptop stood at this handoff so a later '/kick-pull' can tell
+# Record where the laptop stood at this handoff so a later '/kick:pull' can tell
 # whether the laptop diverged. Baton moves to the remote; bump the generation.
 TIP_UUID="$(k_transcript_tip "$PROJ_TRANSCRIPTS/$SID.jsonl")"
 WT_DIGEST="$(k_worktree_digest "$PROJECT_DIR")"
@@ -151,7 +151,7 @@ k_config_merge_json "$PROJECT_DIR" "$(printf '{"checkpoints":{"%s":{"side":"lapt
 NEW_HASH="$(k_lockfile_hash "$PROJECT_DIR")"
 OLD_HASH="$(k_config_get lockfile_hash "$PROJECT_DIR" 2>/dev/null || true)"
 if [ -n "$NEW_HASH" ] && [ "$NEW_HASH" != "$OLD_HASH" ]; then
-  k_alert "Dependencies changed since setup — run '/kick --refresh' to reinstall them on the remote."
+  k_alert "Dependencies changed since setup — run '/kick:push --refresh' to reinstall them on the remote."
 fi
 
 # ---- 10. attach instructions ------------------------------------------------

@@ -1,5 +1,5 @@
 ---
-name: kick-pull
+name: pull
 description: "Bring a session that was handed off with /kick back to the laptop: pull the remote's new commits, uncommitted changes, new/deleted files, and the grown conversation so the laptop mirrors it. Use when the user says pull back, bring it back, return the session, or sync from the server. Stops the remote session by default."
 argument-hint: "[--dry-run] [--code-only|--convo-only] [--keep-remote] [--fork]"
 allowed-tools:
@@ -9,7 +9,7 @@ allowed-tools:
 ---
 
 <objective>
-The return leg of `/kick`. Fetches everything the remote agent did — code (new
+The return leg of `/kick:push`. Fetches everything the remote agent did — code (new
 commits, uncommitted changes, new/deleted files) and the grown conversation
 (transcript + subagents + tool-results + tasks) — so the laptop becomes an exact
 mirror and the user can `claude --resume <id>` locally. Heavy lifting is in
@@ -55,6 +55,6 @@ Run from the project directory.
    `claude --resume <id>`. If it was a remote-wins, name the backup locations.
 4. The remote session is stopped by default once the baton returns; `--keep-remote`
    leaves it running (and warns it will re-diverge).
-5. If it prints `KICK_FATAL: no kick config` — tell the user to run `/kick-setup`
+5. If it prints `KICK_FATAL: no kick config` — tell the user to run `/kick:setup`
    first.
 </flow>

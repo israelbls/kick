@@ -1,12 +1,19 @@
 {
   "name": "kick",
-  "displayName": "Kick — session handoff",
+  "displayName": "Kick \u2014 session handoff",
   "description": "Move a live Claude Code session between your laptop and your own server: hand it off so it survives closing the lid, drive it from your phone, and pull everything back. Code + uncommitted changes + conversation, at the exact position.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": {
     "name": "israelb",
     "email": "israelb@puzzlesoft.co.il"
   },
   "license": "MIT",
-  "keywords": ["session", "handoff", "remote", "ssh", "remote-control", "mobile"]
+  "keywords": [
+    "session",
+    "handoff",
+    "remote",
+    "ssh",
+    "remote-control",
+    "mobile"
+  ]
 }

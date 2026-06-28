@@ -25,7 +25,7 @@ esac
 
 # ---- load connection (from config on --refresh, else from env) -------------
 if [ "$MODE_REFRESH" = "1" ]; then
-  KICK_HOST="$(k_config_get host "$PROJECT_DIR")" || k_fatal "no config — run '/kick-setup' first"
+  KICK_HOST="$(k_config_get host "$PROJECT_DIR")" || k_fatal "no config — run '/kick:setup' first"
   KICK_USER="$(k_config_get user "$PROJECT_DIR")"
   KICK_PORT="$(k_config_get port "$PROJECT_DIR" 2>/dev/null || true)"
   KICK_KEY="$(k_config_get key "$PROJECT_DIR")"
@@ -243,4 +243,4 @@ k_config_set "$PROJECT_DIR" \
 k_ensure_gitignored "$PROJECT_DIR" && k_ok ".claude/kick.local.json written and gitignored" \
   || k_info "config written (not a git repo, so nothing to gitignore)"
 
-k_ok "Setup complete — run /kick anytime to hand off the current session."
+k_ok "Setup complete — run /kick:push anytime to hand off the current session."

@@ -13,7 +13,7 @@ PROJECT_DIR="${KICK_PROJECT_DIR:-$PWD}"
 JSON=0; [ "${1:-}" = "--json" ] && JSON=1
 
 CFG="$(k_config_path "$PROJECT_DIR")"
-[ -f "$CFG" ] || k_fatal "no kick config here — run '/kick-setup' first."
+[ -f "$CFG" ] || k_fatal "no kick config here — run '/kick:setup' first."
 KICK_HOST="$(k_config_get host "$PROJECT_DIR")"
 KICK_USER="$(k_config_get user "$PROJECT_DIR")"
 KICK_PORT="$(k_config_get port "$PROJECT_DIR" 2>/dev/null || true)"

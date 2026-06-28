@@ -1,5 +1,6 @@
 {
   "name": "kick-tools",
+  "description": "Tools for moving live Claude Code sessions between your laptop and your own server.",
   "owner": {
     "name": "israelb"
   },

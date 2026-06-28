@@ -52,7 +52,7 @@ reconstruct_git() {
   elif [ -n "$BRANCH" ] && git rev-parse -q --verify "kick-incoming/$BRANCH" >/dev/null 2>&1; then
     git reset -q --hard "kick-incoming/$BRANCH"
   else
-    echo "KICK_ALERT: could not place HEAD at the laptop's commit — history may have diverged; run '/kick --refresh'" >&2
+    echo "KICK_ALERT: could not place HEAD at the laptop's commit — history may have diverged; run '/kick:push --refresh'" >&2
   fi
 
   # Remove untracked files left over from a previous kick so a file deleted on
