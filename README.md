@@ -10,11 +10,13 @@ all sharing the scripts under `lib/`.
 This repo is a Claude Code plugin **and** its own marketplace. In Claude Code:
 
 ```
-/plugin marketplace add israelbls/kick
+/plugin marketplace add https://github.com/israelbls/kick.git
 /plugin install kick@kick-tools
 ```
 
-Update later with `/plugin update kick@kick-tools`.
+Use the full HTTPS URL (the `owner/repo` shorthand clones over SSH, which needs a
+GitHub SSH key + `github.com` in your `known_hosts`). Update later with
+`/plugin update kick@kick-tools`.
 
 Once installed, the four skills are invoked through the plugin (e.g.
 `/kick:kick-setup`, `/kick:kick`, `/kick:kick-pull`, `/kick:kick-status`).
