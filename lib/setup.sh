@@ -58,8 +58,11 @@ bridge_ssh() {
 }
 
 bridge_claude_auth() {
-  local out; out="$(k_ssh 'claude auth status 2>&1 || true')"
-  if printf '%s' "$out" | grep -qiE 'logged in|authenticated|active account'; then
+  # ~/.local/bin (the native installer's target) isn't on the non-interactive
+  # SSH PATH, so add it before probing. New Claude Code prints JSON
+  # ("loggedIn": true); older builds print human text — accept both.
+  local out; out="$(k_ssh 'export PATH="$HOME/.local/bin:$HOME/bin:$PATH"; claude auth status 2>&1 || true')"
+  if printf '%s' "$out" | grep -qiE 'logged in|authenticated|active account|"?loggedin"?[[:space:]]*:[[:space:]]*true'; then
     k_ok "Remote is logged into Claude"
     return 0
   fi
@@ -69,7 +72,7 @@ bridge_claude_auth() {
 
 bridge_prereqs() {
   local rc=0 out
-  out="$(k_ssh 'for b in git bash claude; do command -v $b >/dev/null 2>&1 && echo "have:$b" || echo "miss:$b"; done; echo "ccver:$(claude --version 2>/dev/null | head -1)"; for p in npm pnpm yarn pip3 poetry bundle go cargo composer; do command -v $p >/dev/null 2>&1 && echo "pm:$p"; done')"
+  out="$(k_ssh 'export PATH="$HOME/.local/bin:$HOME/bin:$PATH"; for b in git bash claude; do command -v $b >/dev/null 2>&1 && echo "have:$b" || echo "miss:$b"; done; echo "ccver:$(claude --version 2>/dev/null | head -1)"; for p in npm pnpm yarn pip3 poetry bundle go cargo composer; do command -v $p >/dev/null 2>&1 && echo "pm:$p"; done')"
   printf '%s\n' "$out" | grep -q 'miss:claude' && { k_alert "Remote has no 'claude' CLI. Install it: curl -fsSL https://claude.ai/install.sh | bash"; rc=4; }
   printf '%s\n' "$out" | grep -q 'miss:git'    && { k_alert "Remote has no 'git'."; rc=4; }
   local ccver; ccver="$(printf '%s\n' "$out" | sed -n 's/^ccver://p')"
@@ -229,8 +232,15 @@ build_payload "$STAGE" warm
 write_land_env "$STAGE" warm
 ship_and_land "$STAGE"
 
-# machine-level tool notes (detect + instruct only)
-TOOLS="$(grep -rhoE '\b(ffmpeg|convert|psql|mysql|redis-cli|docker|gh|pandoc|wkhtmltopdf|sox|tesseract)\b' "$PROJECT_DIR" 2>/dev/null | sort -u | tr '\n' ' ' || true)"
+# machine-level tool notes (detect + instruct only). -I skips binaries and the
+# excludes keep us out of build artifacts and subagent worktrees, which would
+# otherwise spew thousands of "Binary file … matches" lines.
+TOOLS="$(grep -rhoIE \
+  --exclude-dir=.git --exclude-dir=.claude --exclude-dir=node_modules \
+  --exclude-dir=build --exclude-dir=.gradle --exclude-dir=dist \
+  --exclude-dir=.next --exclude-dir=.venv --exclude-dir=target \
+  '\b(ffmpeg|convert|psql|mysql|redis-cli|docker|pandoc|wkhtmltopdf|sox|tesseract)\b' \
+  "$PROJECT_DIR" 2>/dev/null | sort -u | tr '\n' ' ' || true)"
 [ -n "$TOOLS" ] && k_info "Machine tools seen in project (verify on remote): $TOOLS"
 
 # persist config

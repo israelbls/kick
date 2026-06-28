@@ -116,10 +116,13 @@ fi
 
 # ---- 4. launch the resumed session (kick only) -----------------------------
 if [ "$LAUNCH" = "1" ]; then
+  # The native installer puts claude in ~/.local/bin, which isn't on the
+  # non-interactive PATH — add it so the resume launch finds the binary.
+  export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
   CLAUDE_BIN="$(command -v claude || true)"
-  [ -n "$CLAUDE_BIN" ] || { echo "KICK_FATAL: 'claude' not found on remote PATH" >&2; exit 1; }
+  [ -n "$CLAUDE_BIN" ] || { echo "KICK_FATAL: 'claude' not found on remote PATH (looked in ~/.local/bin, ~/bin, PATH)" >&2; exit 1; }
   LOG="$CLAUDE_HOME/kick-$SID.log"
-  START="cd $(printf %q "$REMOTE_PROJECT_DIR") && exec $CLAUDE_BIN --remote-control $(printf %q "$RC_NAME") --resume $(printf %q "$SID")"
+  START="export PATH=\"\$HOME/.local/bin:\$HOME/bin:\$PATH\"; cd $(printf %q "$REMOTE_PROJECT_DIR") && exec $CLAUDE_BIN --remote-control $(printf %q "$RC_NAME") --resume $(printf %q "$SID")"
   if command -v tmux >/dev/null 2>&1; then
     tmux has-session -t "$RC_NAME" 2>/dev/null && tmux kill-session -t "$RC_NAME" || true
     tmux new-session -d -s "$RC_NAME" "bash -lc $(printf %q "$START") > $(printf %q "$LOG") 2>&1"
