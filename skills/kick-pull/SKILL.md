@@ -36,9 +36,13 @@ Run from the project directory.
    ```
    `--dry-run` reports what would come back (commits, turns, size) + a
    clean/diverged verdict, transfers nothing.
-2. **Divergence gate (exit code 10 + `KICK_ASK:`).** If both the laptop and the
-   remote advanced since the kick, pull.sh stops WITHOUT applying and prints
-   `KICK_STAGE=<path>` plus the reasons. Use AskUserQuestion to let the user pick:
+2. **Divergence gate (exit code 10 + `KICK_ASK:`).** This fires ONLY when local
+   **code** advanced since the kick (new commits or a changed working tree) — NOT
+   when only the conversation moved. (The local transcript always grows past the
+   kick by the `/kick` command's own turns; that is expected ceremony, the remote
+   holds the real continuation, and the local transcript is always backed up — so
+   it never triggers this gate.) On a real code divergence pull.sh stops WITHOUT
+   applying and prints `KICK_STAGE=<path>` plus the reasons. Use AskUserQuestion:
    - `remote-wins` — back up local work (`refs/kick/pre-pull-*` ref + git stash +
      a timestamped transcript copy), then mirror the remote.
    - `fork` — land the cloud session under a NEW id and the remote code on a new
@@ -51,8 +55,15 @@ Run from the project directory.
    ```
    (For `abort`, do nothing.) A clean pull or `--fork` needs no prompt — pull.sh
    applies directly.
-3. On `KICK_OK:` — tell the user to resume locally with the printed
-   `claude --resume <id>`. If it was a remote-wins, name the backup locations.
+3. On `KICK_OK:` — the pulled conversation now lives in the SAME session id on
+   disk. **A running Claude Code session can't refresh itself in place**, so the
+   user must OPEN that session to see the advanced context. Relay the exact
+   command pull.sh printed (`KICK_RESUME_SID=<id>` → `claude --resume <id>`) and
+   say plainly: this current chat won't change; the advanced conversation is in
+   that resumed session. If pull.sh warned they ran it from inside that very
+   session, stress they must fully quit and reopen it. Worth mentioning: running
+   `/kick-pull` from a scratch session, then resuming the target, is the cleanest
+   flow. If it was a remote-wins, also name the backup locations.
 4. The remote session is stopped by default once the baton returns; `--keep-remote`
    leaves it running (and warns it will re-diverge).
 5. If it prints `KICK_FATAL: no kick config` — tell the user to run `/kick-setup`

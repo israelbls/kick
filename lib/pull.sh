@@ -46,11 +46,20 @@ SID="$(k_config_get "checkpoints.$GEN.sid" "$PROJECT_DIR" 2>/dev/null || true)"
 [ -n "$SID" ] || SID="$(ls -t "$HOME/.claude/projects/$LOCAL_ENC"/*.jsonl 2>/dev/null | head -1 | xargs -I{} basename {} .jsonl)"
 [ -n "$SID" ] || k_fatal "can't determine the session id; was this project ever kicked?"
 
-DIVERGED=0; REASONS=""
+DIVERGED=0; REASONS=""; CONVO_ADVANCED=0
 NOW_TIP="$(k_transcript_tip "$HOME/.claude/projects/$LOCAL_ENC/$SID.jsonl")"
 NOW_DIGEST="$(k_worktree_digest "$PROJECT_DIR")"
 NOW_HEAD="$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || true)"
-[ -n "$CP_TIP" ]    && [ "$NOW_TIP" != "$CP_TIP" ]       && { DIVERGED=1; REASONS="$REASONS local-conversation-advanced"; }
+# Local conversation advancing past the kick checkpoint is EXPECTED, not
+# divergence: invoking '/kick' appends its own command + result turns to the
+# local transcript that the remote never received, so the local tip ALWAYS
+# moves. The remote holds the authoritative continuation — it received the full
+# transcript and grew it on top — and we back the local transcript up before
+# overwriting. So this can never bury real work; track it for info only and let
+# the remote win the conversation.
+[ -n "$CP_TIP" ] && [ "$NOW_TIP" != "$CP_TIP" ] && CONVO_ADVANCED=1
+# REAL divergence = local CODE moved since the kick (new commits, or a changed
+# working tree). Those CAN bury uncommitted local work, so they need a decision.
 [ -n "$BASE_SHA" ]  && [ -n "$NOW_HEAD" ] && [ "$NOW_HEAD" != "$BASE_SHA" ] && { DIVERGED=1; REASONS="$REASONS local-commits"; }
 [ -n "$CP_DIGEST" ] && [ "$NOW_DIGEST" != "$CP_DIGEST" ] && { DIVERGED=1; REASONS="$REASONS local-worktree-changed"; }
 
@@ -85,7 +94,8 @@ if [ "$DRY" = "1" ]; then
   k_info "DRY RUN — nothing was applied."
   k_info "  session:     $SID"
   k_info "  would bring: $COMMITS new commit(s), ~$TURNS conversation turn(s), payload $SIZE"
-  if [ "$DIVERGED" = "1" ]; then k_alert "DIVERGED (${REASONS# }) — a real pull would ask you and back up local work first."
+  [ "$CONVO_ADVANCED" = "1" ] && k_info "  note: local transcript moved past the kick (expected '/kick' ceremony) — it'll be backed up and the remote conversation wins."
+  if [ "$DIVERGED" = "1" ]; then k_alert "DIVERGED (${REASONS# }) — local CODE advanced too; a real pull would ask you and back up local work first."
   else k_ok "Clean pull available. Run '/kick-pull' to apply."; fi
   rm -rf "$STAGE"; exit 0
 fi
@@ -130,4 +140,14 @@ if [ "$KEEP_REMOTE" = "1" ]; then
 fi
 k_ssh "rm -rf $REMOTE_STAGE" 2>/dev/null || true
 rm -rf "$STAGE"
-k_ok "Pulled. Resume locally with:  claude --resume ${OUT_SID:-$SID}"
+
+# If /kick-pull was run from INSIDE the very session it just overwrote, the live
+# session is still holding the old transcript in memory and won't show the
+# pulled turns — the user has to open it fresh. Detect and say so plainly.
+CUR_SID="$(ls -t "$HOME/.claude/projects/$LOCAL_ENC"/*.jsonl 2>/dev/null | head -1 | xargs -I{} basename {} .jsonl 2>/dev/null || true)"
+echo "KICK_RESUME_SID=${OUT_SID:-$SID}"
+if [ "$CUR_SID" = "${OUT_SID:-$SID}" ]; then
+  k_ok "Pulled — the conversation now holds the remote's turns ON DISK. This live session can't refresh itself, so quit it and reopen with:  claude --resume ${OUT_SID:-$SID}"
+else
+  k_ok "Pulled — the conversation now holds the remote's turns. Open it with the full advanced context:  claude --resume ${OUT_SID:-$SID}"
+fi

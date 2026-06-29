@@ -86,9 +86,12 @@ apply_code() {
 apply_convo() {
   [ "$CONVO" = "1" ] || return 0
   [ -d "$STAGE/raw" ] || { k_alert "no transcript in payload; skipping conversation."; return 0; }
-  # back up the local transcript before overwriting (remote-wins/clean of same SID)
+  # Back up the local transcript before overwriting it. A fork writes to a NEW
+  # sid and never touches the original, so it needs no backup; every other
+  # choice (clean / remote-wins) replaces this SID's transcript, so save it —
+  # even a "clean" pull discards the local '/kick' ceremony turns.
   local localtx="$CLAUDE_HOME/projects/$LOCAL_ENC/$SID.jsonl"
-  if [ "$CHOICE" = "remote-wins" ] && [ -f "$localtx" ]; then
+  if [ "$CHOICE" != "fork" ] && [ -f "$localtx" ]; then
     cp "$localtx" "$localtx.kick-bak-$TS"
     k_info "local transcript backed up to $localtx.kick-bak-$TS"
   fi
