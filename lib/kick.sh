@@ -8,6 +8,10 @@
 #   kick.sh --refresh  run the warm re-sync first (new commits / deps), then kick
 set -euo pipefail
 
+# Stop macOS bsdtar from emitting AppleDouble (._*) sidecar files and xattr
+# headers into the payload — they leak onto the Linux remote as junk.
+export COPYFILE_DISABLE=1
+
 LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=common.sh
 . "$LIB_DIR/common.sh"
@@ -155,8 +159,9 @@ if [ -n "$NEW_HASH" ] && [ "$NEW_HASH" != "$OLD_HASH" ]; then
 fi
 
 # ---- 10. attach instructions ------------------------------------------------
-# kick-land prints the authoritative Remote Control status/URL above. Add the
-# practical note: your code + uncommitted changes are on the remote; the app
-# session opens fresh in the project (not a replay of this chat). The full
-# transcript is on the box too — `claude --resume $SID` there for the history.
-k_ok "Kicked. Open the Claude app → Code tab to drive '$(basename "$REMOTE_PROJECT_DIR")' — your code and uncommitted changes are there. (Chat history isn't replayed into the app session; it's on the box if you need it.)"
+# kick-land prints the authoritative Remote Control status/URL above. The app
+# session resumes THIS conversation (full context) with your code + uncommitted
+# changes in place. Stop typing in the laptop session to avoid divergence; when
+# you're done on the phone, run '/kick-pull' to bring the grown conversation
+# (and any remote edits) back.
+k_ok "Kicked. Open the Claude app → Code tab and pick '$(basename "$REMOTE_PROJECT_DIR")' — it resumes this exact conversation with your code and uncommitted changes. Drive from your phone; run '/kick-pull' when you're back to bring everything home."

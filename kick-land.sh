@@ -114,19 +114,25 @@ if [ "$RUN_INSTALL" = "1" ] && [ -f "$STAGE_DIR/install-plan.sh" ]; then
     || echo "KICK_ALERT: dependency install reported errors — see output above" >&2
 fi
 
-# ---- 4. bring up Remote Control so the phone/web app can drive it ----------
-# We launch the RC *server* (`claude remote-control`), NOT `--remote-control
-# --resume`: the latter demands an internal "deferred marker" a transferred
-# transcript can't have, and errors out. The server reliably registers the
-# machine in the Claude app; it opens fresh sessions in the project dir (your
-# code + uncommitted changes are already here). The transcript we placed is
-# still on disk for a manual `claude --resume` in a terminal if you want it.
+# ---- 4. resume THIS session under Remote Control so the phone/web app can ---
+#         drive it WITH the laptop's conversation context -----------------------
+# We resume the transferred transcript with `claude --remote-control <name>
+# --resume <sid> "<prompt>"`. Two things that look optional are mandatory:
+#   1. An INITIAL PROMPT. Without it, --resume aborts with "No deferred tool
+#      marker found in the resumed session" (that marker only exists in
+#      Anthropic's native teleport). Passing any prompt makes it resume the
+#      full transcript normally and register for Remote Control.
+#   2. The interactive client must OWN a pty and must NOT have its stdout
+#      redirected to a file — the TUI exits instantly if it does. So we run it
+#      in a bare tmux pane and read status by capturing the pane, never a log.
+# Result: the app session has the entire prior conversation (verified), unlike
+# the old fresh-server launch which started context-free sessions.
 if [ "$LAUNCH" = "1" ]; then
   export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
   CLAUDE_BIN="$(command -v claude || true)"
   [ -n "$CLAUDE_BIN" ] || { echo "KICK_FATAL: 'claude' not found on remote PATH (looked in ~/.local/bin, ~/bin, PATH)" >&2; exit 1; }
 
-  # Trust the workspace headlessly so the server doesn't block on the dialog.
+  # Trust the workspace headlessly so the client doesn't block on the dialog.
   if command -v python3 >/dev/null 2>&1; then
     python3 - "$REMOTE_PROJECT_DIR" <<'PY' || echo "KICK_ALERT: could not set workspace trust automatically" >&2
 import json,os,sys
@@ -138,24 +144,39 @@ PY
   fi
 
   APP_NAME="$(basename "$REMOTE_PROJECT_DIR")"
-  LOG="$CLAUDE_HOME/kick-rc-$SID.log"; : > "$LOG"
-  START="export PATH=\"\$HOME/.local/bin:\$HOME/bin:\$PATH\"; cd $(printf %q "$REMOTE_PROJECT_DIR") && exec $CLAUDE_BIN remote-control --name $(printf %q "$APP_NAME")"
-  if command -v tmux >/dev/null 2>&1; then
-    tmux has-session -t "$RC_NAME" 2>/dev/null && tmux kill-session -t "$RC_NAME" || true
-    tmux new-session -d -s "$RC_NAME" "bash -lc $(printf %q "$START") > $(printf %q "$LOG") 2>&1"
-  else
-    nohup bash -lc "$START" > "$LOG" 2>&1 &
-  fi
+  # The bootstrap prompt both satisfies the "provide a prompt" requirement and
+  # gives whoever opens the app a visible confirmation the handoff carried over.
+  BOOT_PROMPT="You've been handed off from my laptop mid-conversation. In one short line, confirm you have our full prior context, then wait for my next instruction."
 
-  # Give it a moment, then read the server's own output to report real status.
-  sleep 5
-  if grep -qi 'Connected' "$LOG" 2>/dev/null; then
-    URL="$(grep -aoE 'https://claude\.ai/code[a-zA-Z0-9./?_=&%+-]*' "$LOG" | head -1)"
-    echo "KICK_OK: Remote Control live as '$APP_NAME'. Open the Claude app (Code tab) or: ${URL:-claude.ai/code}"
-  elif grep -qiE 'enable remote control|select login method|authorize|oauth' "$LOG" 2>/dev/null; then
-    echo "KICK_ALERT: This server needs a ONE-TIME Remote Control enable. SSH in and run 'claude remote-control' once (answer y, approve the browser link), then re-run the kick. (log: $LOG)" >&2
+  if ! command -v tmux >/dev/null 2>&1; then
+    echo "KICK_ALERT: tmux not found on the remote — the interactive Remote Control client needs a pty. Install tmux (e.g. 'sudo apt install -y tmux') and re-kick." >&2
   else
-    echo "KICK_ALERT: Remote Control server started but status is unclear — check $LOG on the remote (tmux session '$RC_NAME')." >&2
+    tmux has-session -t "$RC_NAME" 2>/dev/null && tmux kill-session -t "$RC_NAME" || true
+    tmux new-session -d -s "$RC_NAME" -x 220 -y 50
+    RC_CMD="export PATH=\"\$HOME/.local/bin:\$HOME/bin:\$PATH\"; cd $(printf %q "$REMOTE_PROJECT_DIR") && exec $CLAUDE_BIN --remote-control $(printf %q "$APP_NAME") --resume $(printf %q "$SID") $(printf %q "$BOOT_PROMPT")"
+    tmux send-keys -t "$RC_NAME" "$RC_CMD" Enter
+
+    # Poll the pane until it registers (resume + first turn can take a while).
+    URL=""; STATUS="unclear"
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
+      sleep 4
+      PANE="$(tmux capture-pane -t "$RC_NAME" -p 2>/dev/null || true)"
+      if printf '%s' "$PANE" | grep -qiE 'remote.control is active|/rc active'; then
+        URL="$(printf '%s\n' "$PANE" | grep -aoE 'https://claude\.ai/code/[A-Za-z0-9._/?=&%+-]*' | head -1)"
+        STATUS="live"; break
+      elif printf '%s' "$PANE" | grep -qiE 'No deferred tool marker'; then STATUS="marker"; break
+      elif printf '%s' "$PANE" | grep -qiE 'enable remote control|select login method|authorize|oauth'; then STATUS="enable"; break
+      fi
+      tmux has-session -t "$RC_NAME" 2>/dev/null || { STATUS="exited"; break; }
+    done
+
+    case "$STATUS" in
+      live)   echo "KICK_OK: Remote Control live as '$APP_NAME' WITH your full conversation context. Open the Claude app (Code tab) or: ${URL:-claude.ai/code}" ;;
+      marker) echo "KICK_ALERT: resume hit the deferred-marker error despite a bootstrap prompt — attach to inspect: ssh in and 'tmux attach -t $RC_NAME'." >&2 ;;
+      enable) echo "KICK_ALERT: this server needs a ONE-TIME Remote Control enable. SSH in, run 'claude remote-control' once (answer y, approve the browser link), then re-kick." >&2 ;;
+      exited) echo "KICK_ALERT: the Remote Control client exited during startup — attach to see why: ssh in and 'tmux attach -t $RC_NAME' (or it may have already finished)." >&2 ;;
+      *)      echo "KICK_ALERT: Remote Control client started but status is unclear — attach with: ssh in and 'tmux attach -t $RC_NAME'." >&2 ;;
+    esac
   fi
 fi
 

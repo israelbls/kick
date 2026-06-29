@@ -66,7 +66,10 @@ if [ "$CONVO" = "1" ]; then
     cp "$src" "$STAGE_DIR/raw/projects/$REMOTE_ENC/$FOUND_SID.jsonl"
     [ -d "$proj/$FOUND_SID" ] && cp -R "$proj/$FOUND_SID" "$STAGE_DIR/raw/projects/$REMOTE_ENC/"
     [ -d "$CLAUDE_HOME/tasks/$FOUND_SID" ] && cp -R "$CLAUDE_HOME/tasks/$FOUND_SID" "$STAGE_DIR/raw/tasks/"
-    TURNS="$(grep -c '"type":"user"' "$src" 2>/dev/null || echo 0)"
+    # grep -c prints "0" AND exits 1 on no matches; capture cleanly without a
+    # second echo (which would append a stray "\n0" to the count).
+    TURNS="$(grep -c '"type":"user"' "$src" 2>/dev/null)" || TURNS=0
+    [ -n "$TURNS" ] || TURNS=0
   else
     echo "KICK_ALERT: no remote transcript found in $proj" >&2
   fi
