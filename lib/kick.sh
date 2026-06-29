@@ -155,4 +155,8 @@ if [ -n "$NEW_HASH" ] && [ "$NEW_HASH" != "$OLD_HASH" ]; then
 fi
 
 # ---- 10. attach instructions ------------------------------------------------
-k_ok "Kicked. Open the Claude app → Remote sessions → '$RC_NAME' to keep going from your phone."
+# kick-land prints the authoritative Remote Control status/URL above. Add the
+# practical note: your code + uncommitted changes are on the remote; the app
+# session opens fresh in the project (not a replay of this chat). The full
+# transcript is on the box too — `claude --resume $SID` there for the history.
+k_ok "Kicked. Open the Claude app → Code tab to drive '$(basename "$REMOTE_PROJECT_DIR")' — your code and uncommitted changes are there. (Chat history isn't replayed into the app session; it's on the box if you need it.)"

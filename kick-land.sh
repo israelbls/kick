@@ -114,24 +114,49 @@ if [ "$RUN_INSTALL" = "1" ] && [ -f "$STAGE_DIR/install-plan.sh" ]; then
     || echo "KICK_ALERT: dependency install reported errors — see output above" >&2
 fi
 
-# ---- 4. launch the resumed session (kick only) -----------------------------
+# ---- 4. bring up Remote Control so the phone/web app can drive it ----------
+# We launch the RC *server* (`claude remote-control`), NOT `--remote-control
+# --resume`: the latter demands an internal "deferred marker" a transferred
+# transcript can't have, and errors out. The server reliably registers the
+# machine in the Claude app; it opens fresh sessions in the project dir (your
+# code + uncommitted changes are already here). The transcript we placed is
+# still on disk for a manual `claude --resume` in a terminal if you want it.
 if [ "$LAUNCH" = "1" ]; then
-  # The native installer puts claude in ~/.local/bin, which isn't on the
-  # non-interactive PATH — add it so the resume launch finds the binary.
   export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
   CLAUDE_BIN="$(command -v claude || true)"
   [ -n "$CLAUDE_BIN" ] || { echo "KICK_FATAL: 'claude' not found on remote PATH (looked in ~/.local/bin, ~/bin, PATH)" >&2; exit 1; }
-  LOG="$CLAUDE_HOME/kick-$SID.log"
-  START="export PATH=\"\$HOME/.local/bin:\$HOME/bin:\$PATH\"; cd $(printf %q "$REMOTE_PROJECT_DIR") && exec $CLAUDE_BIN --remote-control $(printf %q "$RC_NAME") --resume $(printf %q "$SID")"
+
+  # Trust the workspace headlessly so the server doesn't block on the dialog.
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$REMOTE_PROJECT_DIR" <<'PY' || echo "KICK_ALERT: could not set workspace trust automatically" >&2
+import json,os,sys
+p=os.path.expanduser("~/.claude.json"); proj=sys.argv[1]
+d=json.load(open(p)) if os.path.isfile(p) else {}
+d.setdefault("projects",{}).setdefault(proj,{})["hasTrustDialogAccepted"]=True
+json.dump(d,open(p,"w"),indent=2)
+PY
+  fi
+
+  APP_NAME="$(basename "$REMOTE_PROJECT_DIR")"
+  LOG="$CLAUDE_HOME/kick-rc-$SID.log"; : > "$LOG"
+  START="export PATH=\"\$HOME/.local/bin:\$HOME/bin:\$PATH\"; cd $(printf %q "$REMOTE_PROJECT_DIR") && exec $CLAUDE_BIN remote-control --name $(printf %q "$APP_NAME")"
   if command -v tmux >/dev/null 2>&1; then
     tmux has-session -t "$RC_NAME" 2>/dev/null && tmux kill-session -t "$RC_NAME" || true
     tmux new-session -d -s "$RC_NAME" "bash -lc $(printf %q "$START") > $(printf %q "$LOG") 2>&1"
-    log "launched under tmux session '$RC_NAME' (log: $LOG)"
   else
     nohup bash -lc "$START" > "$LOG" 2>&1 &
-    log "launched with nohup (no tmux; log: $LOG)"
   fi
-  echo "KICK_OK: remote session is live as remote-control name '$RC_NAME'"
+
+  # Give it a moment, then read the server's own output to report real status.
+  sleep 5
+  if grep -qi 'Connected' "$LOG" 2>/dev/null; then
+    URL="$(grep -aoE 'https://claude\.ai/code[a-zA-Z0-9./?_=&%+-]*' "$LOG" | head -1)"
+    echo "KICK_OK: Remote Control live as '$APP_NAME'. Open the Claude app (Code tab) or: ${URL:-claude.ai/code}"
+  elif grep -qiE 'enable remote control|select login method|authorize|oauth' "$LOG" 2>/dev/null; then
+    echo "KICK_ALERT: This server needs a ONE-TIME Remote Control enable. SSH in and run 'claude remote-control' once (answer y, approve the browser link), then re-run the kick. (log: $LOG)" >&2
+  else
+    echo "KICK_ALERT: Remote Control server started but status is unclear — check $LOG on the remote (tmux session '$RC_NAME')." >&2
+  fi
 fi
 
 echo "KICK_OK: land complete (mode=$MODE)"

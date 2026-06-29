@@ -30,7 +30,7 @@ manager on that server; `python3` and `git` locally.
 | Command | When | What it does |
 |---------|------|--------------|
 | `/kick-setup` | once per project | Verifies SSH + remote `claude` login + prerequisites, clones the repo to the server, installs deps, carries secrets, writes a gitignored config. Slow, thorough. `--refresh` for a lighter re-sync. |
-| `/kick` | leaving the laptop | Ships only today's delta (uncommitted diff + current transcript) onto the warm server and resumes. Fast. `--refresh` re-syncs commits/deps first; `--dry-run` previews. |
+| `/kick` | leaving the laptop | Ships today's delta (uncommitted diff + transcript) onto the warm server, sets workspace trust, and brings up Remote Control so the machine appears in the Claude app. Fast. `--refresh` re-syncs commits/deps first; `--dry-run` previews. |
 | `/kick-pull` | back at the laptop | Brings the remote's code + grown conversation back so the laptop mirrors it; then `claude --resume <id>`. Stops the remote session. |
 | `/kick-status` | anytime | Where the baton is, whether the remote advanced, whether you diverged, what a pull would bring. `--json` for scripting. |
 
@@ -59,9 +59,20 @@ Scripts print machine-readable status lines:
 
 ## Attaching from your phone
 
-After `/kick` prints the Remote Control name (e.g. `kick-mybox-1a2b3c4d`):
-open the Claude app → **Remote sessions** → pick that name. The remote process
-runs under `tmux` (fallback `nohup`), so it survives the SSH connection closing.
+After `/kick`, open the Claude app → **Code tab** (or **claude.ai/code**) and
+pick the machine — named after your project. It runs the `claude remote-control`
+server under `tmux`, so it survives the SSH connection closing.
+
+**One-time per server:** the *first* time, Remote Control must be enabled
+interactively — SSH in and run `claude remote-control` once, answer `y`, and
+approve the browser link (a one-time `sessions`-scope OAuth). After that, `/kick`
+brings it up automatically. If a kick reports it needs enabling, that's why.
+
+**What carries over:** your **code and uncommitted changes** are on the server,
+and the app session opens fresh *in that project*. The **chat history is not
+replayed** into the app session (Remote Control starts fresh sessions) — but the
+full transcript is on the box, so `claude --resume <id>` in a terminal there
+gives you the conversation back if you need it.
 
 ## Troubleshooting
 
@@ -79,4 +90,9 @@ runs under `tmux` (fallback `nohup`), so it survives the SSH connection closing.
 - Machine-level tools (ffmpeg, psql, …) are detected and reported, not installed.
 - Submodule working trees ship as files, but submodule git history doesn't.
 - Anthropic native cloud isn't a target (its teleport drops uncommitted work).
-- Not yet tested end-to-end against a real remote — local mechanics are verified.
+- **Chat history isn't replayed into the Remote Control app session.** Code and
+  uncommitted changes carry over; the app opens a fresh session in the project.
+  `--remote-control --resume` can't drive a transferred transcript (it needs an
+  internal "deferred" marker), so we run the RC server instead. The transcript
+  is on the box for a manual `claude --resume`.
+- Remote Control needs a one-time interactive enable per server (see above).
