@@ -2,7 +2,7 @@
   "name": "kick",
   "displayName": "Kick \u2014 session handoff",
   "description": "Move a live Claude Code session between your laptop and your own server: hand it off so it survives closing the lid, drive it from your phone, and pull everything back. Code + uncommitted changes + conversation, at the exact position.",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "author": {
     "name": "israelb",
     "email": "israelb@puzzlesoft.co.il"

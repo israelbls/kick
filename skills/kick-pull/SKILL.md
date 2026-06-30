@@ -32,10 +32,12 @@ Run from the project directory.
 
 1. Run it (pass through flags):
    ```
-   bash ${CLAUDE_PLUGIN_ROOT}/lib/pull.sh        # --dry-run --code-only --convo-only --keep-remote --fork
+   bash ${CLAUDE_PLUGIN_ROOT}/lib/pull.sh        # --dry-run --code-only --convo-only --keep-remote --fork --name "<title>"
    ```
    `--dry-run` reports what would come back (commits, turns, size) + a
-   clean/diverged verdict, transfers nothing.
+   clean/diverged verdict, transfers nothing. `--name "<title>"` sets the pulled
+   session's display name (default: `<project> (pulled <date time>)`); the name
+   shows up in the `/resume` picker and terminal title so it's easy to find.
 2. **Divergence gate (exit code 10 + `KICK_ASK:`).** This fires ONLY when local
    **code** advanced since the kick (new commits or a changed working tree) — NOT
    when only the conversation moved. (The local transcript always grows past the
@@ -63,7 +65,9 @@ Run from the project directory.
    that resumed session. If pull.sh warned they ran it from inside that very
    session, stress they must fully quit and reopen it. Worth mentioning: running
    `/kick-pull` from a scratch session, then resuming the target, is the cleanest
-   flow. If it was a remote-wins, also name the backup locations.
+   flow. The pull auto-titles the session (`KICK_RESUME_TITLE=...`) so it's easy
+   to spot in `/resume`; pass `--name "<title>"` to choose your own. If it was a
+   remote-wins, also name the backup locations.
 4. The remote session is stopped by default once the baton returns; `--keep-remote`
    leaves it running (and warns it will re-diverge).
 5. If it prints `KICK_FATAL: no kick config` — tell the user to run `/kick-setup`

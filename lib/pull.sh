@@ -15,10 +15,18 @@ LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 PROJECT_DIR="${KICK_PROJECT_DIR:-$PWD}"
 DRY=0; CODE=1; CONVO=1; KEEP_REMOTE=0; FORK=0
-for a in "$@"; do case "$a" in
-  --dry-run) DRY=1 ;; --code-only) CONVO=0 ;; --convo-only) CODE=0 ;;
-  --keep-remote) KEEP_REMOTE=1 ;; --fork) FORK=1 ;;
-esac; done
+PULL_NAME="${KICK_PULL_NAME:-}"
+prev=""
+for a in "$@"; do
+  case "$a" in
+    --dry-run) DRY=1 ;; --code-only) CONVO=0 ;; --convo-only) CODE=0 ;;
+    --keep-remote) KEEP_REMOTE=1 ;; --fork) FORK=1 ;;
+    --name=*) PULL_NAME="${a#--name=}" ;;
+    --name) prev="name" ;;
+    *) [ "$prev" = "name" ] && { PULL_NAME="$a"; prev=""; } ;;
+  esac
+done
+export KICK_PULL_NAME="$PULL_NAME"
 
 CFG="$(k_config_path "$PROJECT_DIR")"
 [ -f "$CFG" ] || k_fatal "no kick config here — run '/kick-setup' first."
@@ -122,6 +130,7 @@ out="$(PROJECT_DIR="$PROJECT_DIR" STAGE="$STAGE" CHOICE="$CHOICE" NEW_SID="$NEW_
 printf '%s\n' "$out"
 APPLIED_SHA="$(printf '%s\n' "$out" | sed -n 's/^APPLIED_SHA=//p')"
 OUT_SID="$(printf '%s\n' "$out" | sed -n 's/^OUT_SID=//p')"
+OUT_TITLE="$(printf '%s\n' "$out" | sed -n 's/^OUT_TITLE=//p')"
 
 # ---- flip the baton ---------------------------------------------------------
 NEW_HEAD="$(git -C "$PROJECT_DIR" rev-parse HEAD 2>/dev/null || echo "$APPLIED_SHA")"
@@ -146,8 +155,10 @@ rm -rf "$STAGE"
 # pulled turns — the user has to open it fresh. Detect and say so plainly.
 CUR_SID="$(ls -t "$HOME/.claude/projects/$LOCAL_ENC"/*.jsonl 2>/dev/null | head -1 | xargs -I{} basename {} .jsonl 2>/dev/null || true)"
 echo "KICK_RESUME_SID=${OUT_SID:-$SID}"
+[ -n "$OUT_TITLE" ] && echo "KICK_RESUME_TITLE=$OUT_TITLE"
+NAMED=""; [ -n "$OUT_TITLE" ] && NAMED=" (titled \"$OUT_TITLE\" — find it in /resume)"
 if [ "$CUR_SID" = "${OUT_SID:-$SID}" ]; then
-  k_ok "Pulled — the conversation now holds the remote's turns ON DISK. This live session can't refresh itself, so quit it and reopen with:  claude --resume ${OUT_SID:-$SID}"
+  k_ok "Pulled — the conversation now holds the remote's turns ON DISK${NAMED}. This live session can't refresh itself, so quit it and reopen with:  claude --resume ${OUT_SID:-$SID}"
 else
-  k_ok "Pulled — the conversation now holds the remote's turns. Open it with the full advanced context:  claude --resume ${OUT_SID:-$SID}"
+  k_ok "Pulled — the conversation now holds the remote's turns${NAMED}. Open it with the full advanced context:  claude --resume ${OUT_SID:-$SID}"
 fi

@@ -108,6 +108,31 @@ apply_convo() {
   mkdir -p "$CLAUDE_HOME/projects" "$CLAUDE_HOME/tasks"
   cp -R "$txout/claude-home/projects/." "$CLAUDE_HOME/projects/" 2>/dev/null || true
   [ -d "$txout/claude-home/tasks" ] && cp -R "$txout/claude-home/tasks/." "$CLAUDE_HOME/tasks/" 2>/dev/null || true
+
+  # Give the pulled session a human-readable title so it's easy to spot in the
+  # `/resume` picker, `claude --resume`, and the terminal title. Claude stores a
+  # session's display name as a 'custom-title' JSONL line (plus a matching
+  # 'agent-name'); appending fresh ones makes the most-recent — authoritative —
+  # title ours. These lines carry no `uuid`, so they don't affect the tip.
+  local placed="$CLAUDE_HOME/projects/$LOCAL_ENC/$OUT_SID.jsonl"
+  if [ ! -f "$placed" ]; then
+    k_alert "placed transcript not found at $placed — skipped titling."
+    return 0
+  fi
+  local title="${KICK_PULL_NAME:-$(basename "$PROJECT_DIR") (pulled $(date '+%Y-%m-%d %H:%M'))}"
+  if KICK_TITLE="$title" KICK_TITLE_SID="$OUT_SID" KICK_PLACED="$placed" python3 <<'PY'
+import json,os
+p=os.environ["KICK_PLACED"]; title=os.environ["KICK_TITLE"]; sid=os.environ["KICK_TITLE_SID"]
+with open(p,"a",encoding="utf-8") as f:
+    f.write(json.dumps({"type":"custom-title","customTitle":title,"sessionId":sid})+"\n")
+    f.write(json.dumps({"type":"agent-name","agentName":title,"sessionId":sid})+"\n")
+PY
+  then
+    k_info "named the pulled session: $title"
+    echo "OUT_TITLE=$title"
+  else
+    k_alert "could not write the session title to $placed (non-fatal — resume by id still works)."
+  fi
 }
 
 # ---- run --------------------------------------------------------------------
