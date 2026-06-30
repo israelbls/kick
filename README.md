@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="kick — hand off a live Claude Code session to your own server, drive it from your phone, pull it home" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.svg">
+    <img src="assets/banner-dark.svg" alt="kick — hand off a live Claude Code session to your own server, drive it from your phone, pull it home" width="100%">
+  </picture>
 </p>
 
 <p align="center">

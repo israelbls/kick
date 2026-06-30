@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 384" width="1280" height="384" role="img" aria-label="kick — hand off a live Claude Code session to your own server, drive it from your phone, pull it home">
+  <defs>
+    <radialGradient id="lGlowA" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#D98324" stop-opacity="0.40"/><stop offset="1" stop-color="#D98324" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lGlowT" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#0E8C80" stop-opacity="0.38"/><stop offset="1" stop-color="#0E8C80" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .mono{font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;}
+      .sans{font-family:"SF Pro Display","Segoe UI",Inter,Helvetica,Arial,sans-serif;}
+    </style>
+  </defs>
+
+  <!-- transparent background (no fill); colors tuned for light theme -->
+
+  <!-- wordmark -->
+  <g class="sans">
+    <text x="72" y="176" font-size="138" font-weight="800" letter-spacing="-4" fill="#15191F">kick</text>
+    <circle cx="398" cy="158" r="13" fill="#D98324">
+      <animate attributeName="r" values="13;16;13" dur="2.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0.6;1" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <g class="sans" fill="#55606F" font-size="18">
+    <text x="78" y="222">Hand off a live Claude&#160;Code session to your own server.</text>
+    <text x="78" y="247">Drive it from your phone &#8212; then pull it home.</text>
+  </g>
+
+  <!-- prompt pill -->
+  <rect x="78" y="276" width="252" height="46" rx="11" fill="#F1F4F9" stroke="#D2D9E4"/>
+  <text x="100" y="305" class="mono" font-size="20" fill="#0E8C80">$ <tspan fill="#B5650C" font-weight="700">/kick</tspan></text>
+  <rect x="206" y="289" width="11" height="20" fill="#15191F">
+    <animate attributeName="opacity" values="1;1;0;0" dur="1.1s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- journey -->
+  <path d="M700 176 H1112" stroke="#BAC3D1" stroke-width="2.5" stroke-dasharray="3 9" stroke-linecap="round"/>
+  <path d="M1120 224 Q 902 330 668 224" fill="none" stroke="#A9CFCA" stroke-width="2.5" stroke-dasharray="3 9" stroke-linecap="round"/>
+
+  <g stroke="#2A3142" stroke-width="2.5" fill="none" stroke-linejoin="round">
+    <rect x="612" y="146" width="78" height="50" rx="5"/>
+    <path d="M600 204 H702 L692 196 H610 Z" fill="#EEF1F6"/>
+  </g>
+  <text x="651" y="232" text-anchor="middle" class="mono" font-size="14" fill="#6B7585">laptop</text>
+
+  <g stroke="#2A3142" stroke-width="2.5" fill="none" stroke-linejoin="round">
+    <rect x="872" y="142" width="64" height="68" rx="7" fill="#EEF1F6"/>
+    <line x1="872" y1="165" x2="936" y2="165"/><line x1="872" y1="188" x2="936" y2="188"/>
+  </g>
+  <circle cx="886" cy="153" r="3.4" fill="#D98324"/><circle cx="886" cy="176" r="3.4" fill="#0E8C80"/><circle cx="886" cy="199" r="3.4" fill="#0E8C80"/>
+  <text x="904" y="232" text-anchor="middle" class="mono" font-size="14" fill="#6B7585">your server</text>
+
+  <g stroke="#2A3142" stroke-width="2.5" fill="none" stroke-linejoin="round">
+    <rect x="1134" y="138" width="46" height="76" rx="11" fill="#EEF1F6"/>
+    <line x1="1148" y1="150" x2="1166" y2="150"/>
+    <circle cx="1157" cy="202" r="3" fill="#2A3142" stroke="none"/>
+  </g>
+  <text x="1157" y="232" text-anchor="middle" class="mono" font-size="14" fill="#6B7585">phone</text>
+
+  <text x="792" y="138" text-anchor="middle" class="mono" font-size="14" fill="#B5650C" font-weight="700">kick &#8594;</text>
+  <text x="894" y="318" text-anchor="middle" class="mono" font-size="14" fill="#0E8C80" font-weight="700">&#8592; pull</text>
+
+  <g>
+    <circle r="16" fill="url(#lGlowA)"><animateMotion dur="3.2s" repeatCount="indefinite" path="M700 176 H1112" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines="0.5 0 0.5 1"/><animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.08;0.5;0.92;1" dur="3.2s" repeatCount="indefinite"/></circle>
+    <circle r="6" fill="#D98324"><animateMotion dur="3.2s" repeatCount="indefinite" path="M700 176 H1112" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines="0.5 0 0.5 1"/><animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.08;0.5;0.92;1" dur="3.2s" repeatCount="indefinite"/></circle>
+  </g>
+  <g>
+    <circle r="15" fill="url(#lGlowT)"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" path="M1120 224 Q 902 330 668 224" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines="0.5 0 0.5 1"/><animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.08;0.5;0.92;1" dur="3.2s" begin="1.6s" repeatCount="indefinite"/></circle>
+    <circle r="5.5" fill="#0E8C80"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" path="M1120 224 Q 902 330 668 224" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines="0.5 0 0.5 1"/><animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.08;0.5;0.92;1" dur="3.2s" begin="1.6s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>
