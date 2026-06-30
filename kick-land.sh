@@ -143,7 +143,9 @@ json.dump(d,open(p,"w"),indent=2)
 PY
   fi
 
-  APP_NAME="$(basename "$REMOTE_PROJECT_DIR")"
+  # Prefer the friendly, kick-branded name the laptop computed (land.env); fall
+  # back to the bare project name for older callers.
+  APP_NAME="${APP_NAME:-$(basename "$REMOTE_PROJECT_DIR")}"
   # The bootstrap prompt both satisfies the "provide a prompt" requirement and
   # gives whoever opens the app a visible confirmation the handoff carried over.
   BOOT_PROMPT="You've been handed off from my laptop mid-conversation. In one short line, confirm you have our full prior context, then wait for my next instruction."

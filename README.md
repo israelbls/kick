@@ -60,7 +60,9 @@ Scripts print machine-readable status lines:
 ## Attaching from your phone
 
 After `/kick`, open the Claude app → **Code tab** (or **claude.ai/code**) and
-pick the session — named after your project. `/kick` resumes the transferred
+pick the session — it's named **`<project> (kicked <date time>)`** so a kicked
+session stands out from your normal cloud sessions (override with the
+`KICK_APP_NAME` env var). `/kick` resumes the transferred
 transcript with `claude --remote-control <name> --resume <id> "<prompt>"` under
 `tmux`, so the session appears in the app **with the full conversation context**
 and survives the SSH connection closing. (The bootstrap prompt is required: a

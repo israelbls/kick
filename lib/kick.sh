@@ -100,6 +100,11 @@ python3 "$LIB_DIR/snapshot_session.py" \
 # ---- 7. land.env ------------------------------------------------------------
 HOST_SHORT="$(hostname -s 2>/dev/null || echo host)"
 RC_NAME="kick-${HOST_SHORT}-${SID:0:8}"
+# The name shown in the Claude app / claude.ai/code session list. Make it
+# obviously a kicked session (so it stands out among normal cloud sessions),
+# not just the bare project name. Mirrors pull's "(pulled …)". Override with
+# KICK_APP_NAME (e.g. to add the origin host).
+APP_NAME="${KICK_APP_NAME:-$(basename "$REMOTE_PROJECT_DIR") (kicked $(date '+%Y-%m-%d %H:%M'))}"
 cat > "$STAGE/land.env" <<EOF
 MODE=delta
 REMOTE_PROJECT_DIR=$REMOTE_PROJECT_DIR
@@ -113,6 +118,7 @@ LAUNCH=1
 CLEAN_UNTRACKED=1
 RC_NAME=$RC_NAME
 EOF
+printf 'APP_NAME=%q\n' "$APP_NAME" >> "$STAGE/land.env"
 
 # ---- 7b. dry-run: report what *would* ship, then stop ----------------------
 if [ "$DRY_RUN" = "1" ]; then
