@@ -109,11 +109,12 @@ apply_convo() {
   cp -R "$txout/claude-home/projects/." "$CLAUDE_HOME/projects/" 2>/dev/null || true
   [ -d "$txout/claude-home/tasks" ] && cp -R "$txout/claude-home/tasks/." "$CLAUDE_HOME/tasks/" 2>/dev/null || true
 
-  # Give the pulled session a human-readable title so it's easy to spot in the
-  # `/resume` picker, `claude --resume`, and the terminal title. Claude stores a
-  # session's display name as a 'custom-title' JSONL line (plus a matching
-  # 'agent-name'); appending fresh ones makes the most-recent — authoritative —
-  # title ours. These lines carry no `uuid`, so they don't affect the tip.
+  # Give the pulled session a human-readable name so it's easy to spot in the
+  # `/resume` picker, `claude --resume`, and the terminal title. The picker
+  # resolves a session's display name as `customTitle || aiTitle` (verified in
+  # the CLI), so we append BOTH (plus a matching 'agent-name' for the prompt
+  # box) set to our title — whichever the picker prefers, it shows our name.
+  # These lines carry no `uuid`, so they don't affect the transcript tip.
   local placed="$CLAUDE_HOME/projects/$LOCAL_ENC/$OUT_SID.jsonl"
   if [ ! -f "$placed" ]; then
     k_alert "placed transcript not found at $placed — skipped titling."
@@ -125,6 +126,7 @@ import json,os
 p=os.environ["KICK_PLACED"]; title=os.environ["KICK_TITLE"]; sid=os.environ["KICK_TITLE_SID"]
 with open(p,"a",encoding="utf-8") as f:
     f.write(json.dumps({"type":"custom-title","customTitle":title,"sessionId":sid})+"\n")
+    f.write(json.dumps({"type":"ai-title","aiTitle":title,"sessionId":sid})+"\n")
     f.write(json.dumps({"type":"agent-name","agentName":title,"sessionId":sid})+"\n")
 PY
   then
